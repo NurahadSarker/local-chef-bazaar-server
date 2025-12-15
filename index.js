@@ -39,6 +39,7 @@ async function run() {
     const ordersCollection = db.collection("orders");
     const reviewsCollection = db.collection("reviews");
     const favoritesCollection = db.collection("favorites");
+    const roleRequestCollection = db.collection("roleRequests");
 
     /*---------------user---------------*/
     app.post("/users", async (req, res) => {
@@ -142,6 +143,41 @@ async function run() {
     app.get("/favorites/:email", async (req, res) => {
       const email = req.params.email;
       const result = await favoritesCollection.find({ email }).toArray();
+      res.send(result);
+    });
+
+    /*-----------admin-----------*/
+    app.post("/role-request", async (req, res) => {
+      const request = req.body;
+      request.status = "pending";
+      const result = await roleRequestCollection.insertOne(request);
+      res.send(result);
+    });
+
+    app.get("/role-request", async (req, res) => {
+      const result = await roleRequestCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/role-request/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const { role, email } = req.body;
+
+      await usersCollection.updateOne(
+        { email },
+        {
+          $set: {
+            role,
+            chefId: role === "chef" ? `CH-${Date.now()}` : null,
+          },
+        }
+      );
+
+      const result = await roleRequestCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "approved" } }
+      );
+
       res.send(result);
     });
   }
