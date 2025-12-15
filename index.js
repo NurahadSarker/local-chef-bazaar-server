@@ -35,6 +35,7 @@ async function run() {
 
     const db = client.db("localChefBazaar");
     const usersCollection = db.collection("users");
+    const mealsCollection = db.collection("meals");
 
     /*---------------user---------------*/
     app.post("/users", async (req, res) => {
@@ -56,6 +57,31 @@ async function run() {
         { _id: new ObjectId(id) },
         { $set: { status: "fraud" } }
       );
+      res.send(result);
+    });
+
+    /*----------------chef-------------*/
+    /*--meals--*/
+    app.post("/meals", async (req, res) => {
+      const meal = req.body;
+      const result = await mealsCollection.insertOne(meal);
+      res.send(result);
+    });
+
+    app.get("/meals", async (req, res) => {
+      const result = await mealsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/meals/chef/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await mealsCollection.find({ chefEmail: email }).toArray();
+      res.send(result);
+    });
+
+    app.delete("/meals/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await mealsCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
   }
