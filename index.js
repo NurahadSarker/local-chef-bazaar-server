@@ -37,6 +37,7 @@ async function run() {
     const usersCollection = db.collection("users");
     const mealsCollection = db.collection("meals");
     const ordersCollection = db.collection("orders");
+    const reviewsCollection = db.collection("reviews");
 
     /*---------------user---------------*/
     app.post("/users", async (req, res) => {
@@ -114,6 +115,19 @@ async function run() {
         { _id: new ObjectId(id) },
         { $set: { orderStatus: status } }
       );
+      res.send(result);
+    });
+
+    /*--reviews--*/
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewsCollection.insertOne(review);
+      res.send(result);
+    });
+
+    app.get("/reviews/:mealId", async (req, res) => {
+      const mealId = req.params.mealId;
+      const result = await reviewsCollection.find({ mealId }).toArray();
       res.send(result);
     });
   }
