@@ -38,6 +38,7 @@ async function run() {
     const mealsCollection = db.collection("meals");
     const ordersCollection = db.collection("orders");
     const reviewsCollection = db.collection("reviews");
+    const favoritesCollection = db.collection("favorites");
 
     /*---------------user---------------*/
     app.post("/users", async (req, res) => {
@@ -128,6 +129,19 @@ async function run() {
     app.get("/reviews/:mealId", async (req, res) => {
       const mealId = req.params.mealId;
       const result = await reviewsCollection.find({ mealId }).toArray();
+      res.send(result);
+    });
+
+    /*--favorites*/
+    app.post("/favorites", async (req, res) => {
+      const fav = req.body;
+      const result = await favoritesCollection.insertOne(fav);
+      res.send(result);
+    });
+
+    app.get("/favorites/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await favoritesCollection.find({ email }).toArray();
       res.send(result);
     });
   }
