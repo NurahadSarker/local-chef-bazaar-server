@@ -36,6 +36,7 @@ async function run() {
     const db = client.db("localChefBazaar");
     const usersCollection = db.collection("users");
     const mealsCollection = db.collection("meals");
+    const ordersCollection = db.collection("orders");
 
     /*---------------user---------------*/
     app.post("/users", async (req, res) => {
@@ -82,6 +83,37 @@ async function run() {
     app.delete("/meals/:id", async (req, res) => {
       const id = req.params.id;
       const result = await mealsCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    /*--orders--*/
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      order.orderStatus = "pending";
+      order.paymentStatus = "pending";
+      const result = await ordersCollection.insertOne(order);
+      res.send(result);
+    });
+
+    app.get("/orders/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await ordersCollection.find({ userEmail: email }).toArray();
+      res.send(result);
+    });
+
+    app.get("/orders/chef/:chefId", async (req, res) => {
+      const chefId = req.params.chefId;
+      const result = await ordersCollection.find({ chefId }).toArray();
+      res.send(result);
+    });
+
+    app.patch("/orders/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+      const result = await ordersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { orderStatus: status } }
+      );
       res.send(result);
     });
   }
