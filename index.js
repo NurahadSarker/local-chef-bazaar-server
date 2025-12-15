@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -21,7 +21,7 @@ const client = new MongoClient(uri, {
   }
 });
 
-app.get('/', (req, res) =>{
+app.get('/', (req, res) => {
   res.send('Local chef bazaar server is running')
 })
 
@@ -33,16 +33,40 @@ async function run() {
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
+    const db = client.db("localChefBazaar");
+    const usersCollection = db.collection("users");
 
+    /*---------------user---------------*/
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const exists = await usersCollection.findOne({ email: user.email });
+      if (exists) return res.send({ message: "User already exists" });
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/users/fraud/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await usersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "fraud" } }
+      );
+      res.send(result);
+    });
   }
 
   finally {
-    
+
   }
 }
 
 run().catch(console.dir);
 
-app.listen(port, ()=>{
+app.listen(port, () => {
   console.log(`local chef bazaar server running on port ${port}`)
 })
