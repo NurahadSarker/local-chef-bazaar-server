@@ -326,6 +326,17 @@ async function run() {
     favoritesCollection = db.collection("favorites");
     roleRequestCollection = db.collection("roleRequests");
 
+    // 🔥 Generate sequential Chef ID like CH-001, CH-002
+    const generateChefId = async () => {
+      const chefCount = await usersCollection.countDocuments({
+        role: "chef",
+        chefId: { $exists: true },
+      });
+
+      return `CH-${String(chefCount + 1).padStart(3, "0")}`;
+    };
+
+
     /* ================= USERS ================= */
 
     app.post("/users", async (req, res) => {
@@ -486,12 +497,18 @@ async function run() {
       const id = req.params.id;
       const { role, email } = req.body;
 
+      let chefId = null;
+
+      if (role === "chef") {
+        chefId = await generateChefId(); // ✅ CH-001 format
+      }
+
       await usersCollection.updateOne(
         { email },
         {
           $set: {
             role,
-            chefId: role === "chef" ? `CH-${Date.now()}` : null,
+            chefId,
           },
         }
       );
@@ -501,8 +518,9 @@ async function run() {
         { $set: { requestStatus: "approved" } }
       );
 
-      res.send(result);
+      res.send({ success: true, chefId });
     });
+
 
     app.patch("/role-request/reject/:id", async (req, res) => {
       const id = req.params.id;
