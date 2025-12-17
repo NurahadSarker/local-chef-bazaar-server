@@ -397,6 +397,21 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/meals/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const meal = await mealsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!meal) {
+        return res.status(404).send({ message: "Meal not found" });
+      }
+
+      res.send(meal);
+    });
+
+
     app.delete("/meals/:id", async (req, res) => {
       const id = req.params.id;
       const result = await mealsCollection.deleteOne({ _id: new ObjectId(id) });
