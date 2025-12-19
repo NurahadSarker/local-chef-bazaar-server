@@ -428,6 +428,15 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/orders", async (req, res) => {
+      try {
+        const orders = await ordersCollection.find({}).toArray();
+        res.send(orders);
+      } catch (error) {
+        res.status(500).send({ error: error.message });
+      }
+    });
+
     app.get("/orders/user/:email", async (req, res) => {
       const email = req.params.email;
       const result = await ordersCollection.find({ userEmail: email }).toArray();
