@@ -445,9 +445,14 @@ async function run() {
 
     app.get("/orders/chef/:chefId", async (req, res) => {
       const chefId = req.params.chefId;
-      const result = await ordersCollection.find({ chefId }).toArray();
-      res.send(result);
+
+      const orders = await ordersCollection.find({
+        chefId: chefId.trim()
+      }).toArray();
+
+      res.send(orders);
     });
+
 
     app.patch("/orders/status/:id", async (req, res) => {
       const id = req.params.id;
