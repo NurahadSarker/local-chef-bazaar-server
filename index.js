@@ -280,6 +280,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -460,11 +461,17 @@ async function run() {
 
       const result = await ordersCollection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { paymentStatus: "paid" } }
+        {
+          $set: {
+            paymentStatus: "paid",
+            paidAt: new Date()
+          }
+        }
       );
 
       res.send(result);
     });
+
 
 
     app.patch("/orders/status/:id", async (req, res) => {
@@ -488,6 +495,17 @@ async function run() {
       const result = await reviewsCollection.insertOne(review);
       res.send(result);
     });
+
+    app.get("/reviews/home", async (req, res) => {
+      const result = await reviewsCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .toArray();
+
+      res.send(result);
+    });
+
 
     // GET
     app.get("/reviews/:mealId", async (req, res) => {
@@ -646,6 +664,39 @@ async function run() {
 
       res.send({ totalUsers, totalOrders, deliveredOrders });
     });
+
+    // app.post("/create-payment-intent", async (req, res) => {
+    //   const { totalPrice } = req.body;
+
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: totalPrice * 100, // Stripe uses cents
+    //     currency: "bdt",
+    //     payment_method_types: ["card"],
+    //   });
+
+    //   res.send({
+    //     clientSecret: paymentIntent.client_secret,
+    //   });
+    // });
+
+    // app.post('/create-checkout-session', async (req, res) => {
+    //   const paymentInfo = req.body
+    //   const session = await stripe.checkout.sessions.create({
+    //     line_items: [
+    //       {
+    //         // Provide the exact Price ID (for example, price_1234) of the product you want to sell
+    //         price: '{{PRICE_ID}}',
+    //         quantity: 1,
+    //       },
+    //     ],
+    //     mode: 'payment',
+    //     success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+    //   });
+
+    //   res.redirect(303, session.url);
+    // });
+
+
 
   } finally {
     // optional: client.close()
