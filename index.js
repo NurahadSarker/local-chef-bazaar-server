@@ -480,35 +480,91 @@ async function run() {
 
     /* ================= REVIEWS ================= */
 
+    // POST
     app.post("/reviews", async (req, res) => {
       const review = req.body;
+      // Ensure mealId is string
+      review.mealId = review.mealsId.toString();
       const result = await reviewsCollection.insertOne(review);
       res.send(result);
     });
 
+    // GET
     app.get("/reviews/:mealId", async (req, res) => {
       const mealId = req.params.mealId;
-
-      // MongoDB তে mealId string হিসেবে save হয়ে থাকলে
-      const result = await reviewsCollection.find({ mealId: mealId }).toArray();
-
+      const result = await reviewsCollection.find({ mealId }).toArray();
       res.send(result);
     });
+
+    app.get("/reviews/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await reviewsCollection.find({ userEmail: email }).toArray();
+      res.send(result);
+    });
+
+
+    app.delete("/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await reviewsCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    app.put("/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+      const { review, rating } = req.body;
+
+      try {
+        const result = await reviewsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { review, rating } }
+        );
+        res.send(result);
+      } catch (err) {
+        res.status(500).send({ error: err.message });
+      }
+    });
+
 
 
     /* ================= FAVORITES ================= */
 
     app.post("/favorites", async (req, res) => {
-      const fav = req.body;
-      const result = await favoritesCollection.insertOne(fav);
+      const favorite = req.body;
+
+      const exists = await favoritesCollection.findOne({
+        userEmail: favorite.userEmail,
+        mealId: favorite.mealId
+      });
+
+      if (exists) {
+        return res.send({ exists: true });
+      }
+
+      favorite.addedTime = new Date();
+      const result = await favoritesCollection.insertOne(favorite);
+      res.send({ insertedId: result.insertedId });
+    });
+
+    app.get("/favorites/check", async (req, res) => {
+      const { userEmail, mealId } = req.query;
+
+      const exists = await favoritesCollection.findOne({ userEmail, mealId });
+      res.send({ isFavorite: !!exists });
+    });
+
+
+    app.get("/favorites/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await favoritesCollection.find({ userEmail: email }).toArray();
       res.send(result);
     });
 
-    app.get("/favorites/:email", async (req, res) => {
-      const email = req.params.email;
-      const result = await favoritesCollection.find({ email }).toArray();
+    app.delete("/favorites/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await favoritesCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
+
 
     /* ================= ROLE REQUEST ================= */
 
