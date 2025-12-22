@@ -443,14 +443,27 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/orders/chef/:chefId", async (req, res) => {
+    // GET orders by chefId
+    app.get('/orders/chef/:chefId', async (req, res) => {
       const chefId = req.params.chefId;
 
-      const orders = await ordersCollection.find({
-        chefId: chefId.trim()
-      }).toArray();
+      const result = await ordersCollection
+        .find({ chefId })
+        .toArray();
 
-      res.send(orders);
+      res.send(result);
+    });
+
+
+    app.patch("/orders/payment/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const result = await ordersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { paymentStatus: "paid" } }
+      );
+
+      res.send(result);
     });
 
 
@@ -475,9 +488,13 @@ async function run() {
 
     app.get("/reviews/:mealId", async (req, res) => {
       const mealId = req.params.mealId;
-      const result = await reviewsCollection.find({ mealId }).toArray();
+
+      // MongoDB তে mealId string হিসেবে save হয়ে থাকলে
+      const result = await reviewsCollection.find({ mealId: mealId }).toArray();
+
       res.send(result);
     });
+
 
     /* ================= FAVORITES ================= */
 
